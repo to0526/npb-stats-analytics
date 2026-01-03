@@ -6,6 +6,7 @@ def explain_prediction(
     age: int,
     age_group: str,
     past_ops: str,
+    similar_players: str,
     pred_ops: float,
     expectation: str,
     model_name: str = "llama3",
@@ -24,6 +25,9 @@ def explain_prediction(
 
 予測OPS: {pred_ops:.3f}
 期待度: {expectation}
+
+OPS推移が数値的に近い選手（分析結果）:
+{similar_players}
 
 この情報をもとに、
 ・野球ファン向け
