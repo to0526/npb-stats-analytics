@@ -7,6 +7,7 @@ from constants import FEATURE_COLS
 from llm.explain import explain_prediction
 from domain.age_category import calc_age, age_category
 from domain.expectation import expectation_star
+from utils.spinner import Spinner
 
 def load_player_info(player_id: int):
     players_df = pd.read_csv("data/players.csv")
@@ -57,6 +58,9 @@ def main():
     print(f"予測OPS: {pred_ops:.3f}")
     print(f"期待度: {expectation}")
     print("================================")
+    # スピナー開始
+    spinner = Spinner("AIが分析中")
+    spinner.start()
     comment = explain_prediction(
         player_name=player_info["name"],
         age=age,
@@ -65,6 +69,8 @@ def main():
         past_ops=past_ops_df.to_string(index=False),
         pred_ops=pred_ops,
     )
+    # スピナー停止
+    spinner.stop()
     print("\nAIコメント:")
     print(comment)
 
