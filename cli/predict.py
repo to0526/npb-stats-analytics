@@ -1,7 +1,6 @@
 import argparse
 import pandas as pd
 import joblib
-from ml.model import DummyOPSModel
 
 def load_player(player_id):
     df = pd.read_csv("data/players.csv")
