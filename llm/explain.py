@@ -1,23 +1,51 @@
-from openai import OpenAI
+import subprocess
+from typing import Optional
 
-client = OpenAI()
-
-def explain_prediction(player_name, age, age_group, expectation, past_ops, pred_ops):
+def explain_prediction(
+    player_name: str,
+    age: int,
+    age_group: str,
+    past_ops: str,
+    pred_ops: float,
+    expectation: str,
+    model_name: str = "llama3",
+    timeout: int = 60,
+) -> str:
+    """
+    Llama3 (via Ollama) を使って予測結果の説明文を生成する
+    """
     prompt = f"""
-あなたはプロ野球のデータ分析アナリストです。
+以下はプロ野球選手の打撃成績予測です。
 
 選手名: {player_name}
-年齢: {age}
+年齢: {age}歳（{age_group}）
 過去のOPS:
 {past_ops}
 
-来季予測OPS: {pred_ops:.3f}
+予測OPS: {pred_ops:.3f}
+期待度: {expectation}
 
-この選手の来季の期待値を、野球ファン向けに分かりやすく説明してください。
+この情報をもとに、
+・野球ファン向け
+・前向きだが過度に煽らない
+・100文字前後
+でコメントを生成してください。
 """
-    # res = client.responses.create(
-    #     model="gpt-4.1-mini",
-    #     input=prompt
-    # )
-    # return res.output_text
-    return prompt
+    try:
+        result = subprocess.run(
+            ["ollama", "run", model_name],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr)
+        return result.stdout.strip()
+    except Exception as e:
+        # LLM失敗時のフォールバック
+        return (
+            f"{player_name}は近年安定した成績を残しており、"
+            f"次シーズンもOPS {pred_ops:.3f}前後が期待されます。"
+            f"（LLM生成失敗: {e}）"
+        )
