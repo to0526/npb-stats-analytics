@@ -4,6 +4,7 @@ import joblib
 
 from features.builder import build_features
 from constants import FEATURE_COLS
+from llm.explain import explain_prediction
 
 def load_player_info(player_id: int):
     players_df = pd.read_csv("data/players.csv")
@@ -47,6 +48,14 @@ def main():
     print()
     print(f"予測OPS: {pred_ops:.3f}")
     print("================================")
+    comment = explain_prediction(
+        player_name=player_info["name"],
+        age=int(latest_row["age"]),
+        past_ops=past_ops_df.to_string(index=False),
+        pred_ops=pred_ops,
+    )
+    print("\nAIコメント:")
+    print(comment)
 
 if __name__ == "__main__":
     main()
