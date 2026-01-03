@@ -5,6 +5,8 @@ import joblib
 from features.builder import build_features
 from constants import FEATURE_COLS
 from llm.explain import explain_prediction
+from domain.age_category import calc_age, age_category
+from domain.expectation import expectation_star
 
 def load_player_info(player_id: int):
     players_df = pd.read_csv("data/players.csv")
@@ -38,19 +40,28 @@ def main():
     pred_ops = model.predict(X_pred)[0]
     player_info = load_player_info(args.player_id)
     past_ops_df = load_past_ops(args.player_id)
+    birth_year = player_info["birth_year"]
+    latest_year = int(latest_row["year"])
+    age = calc_age(birth_year, latest_year)
+    age_group = age_category(age)
+    expectation = expectation_star(pred_ops)
     print("================================")
     if player_info:
         print(f"選手名: {player_info['name']}")
+        print(f"年齢: {age}（{age_group}）")
     print()
     print("過去のOPS:")
     for _, row in past_ops_df.iterrows():
         print(f"  {int(row['year'])}: {row['ops']:.3f}")
     print()
     print(f"予測OPS: {pred_ops:.3f}")
+    print(f"期待度: {expectation}")
     print("================================")
     comment = explain_prediction(
         player_name=player_info["name"],
-        age=int(latest_row["age"]),
+        age=age,
+        age_group=age_group,
+        expectation=expectation,
         past_ops=past_ops_df.to_string(index=False),
         pred_ops=pred_ops,
     )

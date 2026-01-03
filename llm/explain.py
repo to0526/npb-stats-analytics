@@ -2,7 +2,7 @@ from openai import OpenAI
 
 client = OpenAI()
 
-def explain_prediction(player_name, age, past_ops, pred_ops):
+def explain_prediction(player_name, age, age_group, expectation, past_ops, pred_ops):
     prompt = f"""
 あなたはプロ野球のデータ分析アナリストです。
 
