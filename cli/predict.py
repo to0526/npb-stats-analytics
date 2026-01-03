@@ -19,10 +19,13 @@ def load_player_info(player_id: int):
         "birth_year": row.iloc[0]["birth_year"],
     }
 
-def load_past_ops(player_id: int):
+def load_past_ops(player_id: int, n_years: int = 3):
     stats_df = pd.read_csv("data/batter_stats.csv")
-    df = stats_df[stats_df["player_id"] == player_id] \
+    df = (
+        stats_df[stats_df["player_id"] == player_id]
         .sort_values("year")
+        .tail(n_years)
+    )
     return df[["year", "ops"]]
 
 def main():
