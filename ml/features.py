@@ -18,6 +18,8 @@ def create_training_data(stats_df, players_df):
             prev3 = g.iloc[i - 3]
             age = row["year"] - row["birth_year"]
             records.append({
+                "player_id": player_id,
+                "year": row["year"],
                 "age": age,
                 "ops_t-1": prev1["ops"],
                 "ops_t-2": prev2["ops"],
