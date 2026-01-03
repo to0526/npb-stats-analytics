@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+import joblib
 from ml.model import DummyOPSModel
 
 def load_player(player_id):
@@ -32,7 +33,7 @@ def main(player_id):
     player = load_player(player_id)
     stats = load_stats(player_id)
     X = make_features(stats, player["birth_year"])
-    model = DummyOPSModel()
+    model = joblib.load("models/ops_model.pkl")
     pred_ops = model.predict(X)[0]
     print(f"選手名: {player['name']}")
     print(f"年齢: {X.iloc[0]['age']}")
