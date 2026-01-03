@@ -8,7 +8,7 @@ from llm.explain import explain_prediction
 from domain.age_category import calc_age, age_category
 from domain.expectation import expectation_star
 from utils.spinner import Spinner
-from domain.similar_players import find_similar_players
+from domain.similar_players import find_similar_players_by_age_window
 
 def load_player_info(player_id: int):
     players_df = pd.read_csv("data/players.csv")
@@ -50,7 +50,7 @@ def main():
     age = calc_age(birth_year, latest_year)
     age_group = age_category(age)
     expectation = expectation_star(pred_ops)
-    similar_players = find_similar_players(
+    similar_players = find_similar_players_by_age_window(
         target_player_id=args.player_id,
         stats_df=stats_df,
         players_df=players_df,
@@ -70,6 +70,7 @@ def main():
     for p in similar_players:
         print(
             f"  {p['name']} "
+            f"  {p['age_range']}歳"
             f"(OPS推移: {', '.join(f'{x:.3f}' for x in p['ops'])})"
         )
     print("================================")
