@@ -8,6 +8,41 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 PLAYERS_CSV = DATA_DIR / "players.csv"
 STATS_CSV = DATA_DIR / "batter_stats.csv"
+TEAM_URLS = {
+    "G": "https://npb.jp/bis/teams/rst_g.html",  # 巨人
+    "T": "https://npb.jp/bis/teams/rst_t.html",  # 阪神
+    "D": "https://npb.jp/bis/teams/rst_d.html",  # 中日
+    "C": "https://npb.jp/bis/teams/rst_c.html",  # 広島
+    "DB": "https://npb.jp/bis/teams/rst_db.html",  # DeNA
+    "S": "https://npb.jp/bis/teams/rst_s.html",  # ヤクルト
+    "H": "https://npb.jp/bis/teams/rst_h.html",  # ソフトバンク
+    "F": "https://npb.jp/bis/teams/rst_f.html",  # 日本ハム
+    "M": "https://npb.jp/bis/teams/rst_m.html",  # ロッテ
+    "E": "https://npb.jp/bis/teams/rst_e.html",  # 楽天
+    "L": "https://npb.jp/bis/teams/rst_l.html",  # 西武
+    "B": "https://npb.jp/bis/teams/rst_b.html",  # オリックス
+}
+
+def fetch_team_batters(team_url: str) -> list[str]:
+    res = requests.get(team_url, headers={"User-Agent": "Mozilla/5.0"})
+    res.encoding = res.apparent_encoding
+    res.raise_for_status()
+    soup = BeautifulSoup(res.text, "html.parser")
+    player_urls = []
+    for tr in soup.select("table tr"):
+        tds = tr.select("td")
+        if len(tds) < 4:
+            continue
+        position = tds[3].text.strip()
+        if position == "投手":
+            continue  # 投手を除外
+        a = tds[1].select_one("a")
+        if not a:
+            continue
+        href = a.get("href")
+        if href and href.startswith("/bis/players/"):
+            player_urls.append("https://npb.jp" + href)
+    return player_urls
 
 def fetch_player(url: str):
     res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -25,6 +60,12 @@ def fetch_player(url: str):
         td = tr.find("td")
         if not th or not td:
             continue
+        label = th.text.strip()
+        value = td.text.strip()
+        if label == "ポジション":
+            if value == "投手":
+                print(f"skip pitcher: {name} ({player_id})")
+                return
         if th.text.strip() == "生年月日":
             # 例: 2001年12月25日
             birth_year = int(td.text.strip()[:4])
@@ -63,8 +104,23 @@ def append_csv(path: Path, df: pd.DataFrame, key=None, keys=None):
             df = df.drop_duplicates(subset=keys)
     df.to_csv(path, index=False)
 
-if __name__ == "__main__":
-    url = input("NPB選手ページURLを入力してください: ").strip()
-    fetch_player(url)
-    time.sleep(5)
+def load_existing_player_ids() -> set[str]:
+    if not PLAYERS_CSV.exists():
+        return set()
+    df = pd.read_csv(PLAYERS_CSV)
+    return set(df["player_id"].astype(str))
 
+if __name__ == "__main__":
+    existing_ids = load_existing_player_ids()
+    for team, team_url in TEAM_URLS.items():
+        print(f"\n=== {team} ===")
+        player_urls = fetch_team_batters(team_url)
+        for url in player_urls:
+            player_id = url.rstrip("/").split("/")[-1].split(".")[0]
+            if player_id in existing_ids:
+                print(f"skip existing: {player_id}")
+                continue
+            print(f"fetching {url}")
+            fetch_player(url)
+            existing_ids.add(player_id)  # メモリ上でも更新
+            time.sleep(5)
